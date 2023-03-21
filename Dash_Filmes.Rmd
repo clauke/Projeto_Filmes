@@ -1,0 +1,218 @@
+---
+title: 'Projeto Filmes'
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(plotly)
+library(tidyverse)
+library(flexdashboard)
+library(shiny)
+library(shinyWidgets)
+
+#---- Carregando Dataset ----
+
+df <- read_excel('Dataset.xlsx')
+
+#---- Análise Exploratória ----
+# View(df)  # Descomente caso queira visualizar o Dataset
+str(df)
+summary(df)
+
+#---- Conversão de variáveis ----
+df$PERIODO <- as.factor(df$PERIODO)
+df$CATEGORIA <- as.factor(df$CATEGORIA)
+df$GENERO <- as.factor(df$GENERO)
+df$DISPOSITIVO <- as.factor(df$DISPOSITIVO)
+df$EXECUTADO_VIA <- as.factor(df$EXECUTADO_VIA)
+df$DATA <- as.Date(df$DATA)
+
+#---- Preparação dos Dados ----
+
+Total_Acessos_Cat <- df %>%
+  group_by(CATEGORIA) %>%
+  count(CATEGORIA) %>%
+  rename(Acessos = n) %>%
+  spread(CATEGORIA, Acessos) %>%
+  mutate(Total = Filme + Serie)
+
+Dispositivos_Categ <- df %>% 
+  group_by(DISPOSITIVO, CATEGORIA) %>%
+  count() %>%
+  rename(Acessos = n) %>% 
+  spread(CATEGORIA, Acessos) %>% 
+  ungroup() %>% 
+  mutate(Total = (Filme + Serie)) %>% 
+  arrange(-Total)
+
+Dispositivos_Categ$Total <- as.factor(Dispositivos_Categ$Total)
+
+Turnos_Categ <- df %>% 
+  group_by(PERIODO, CATEGORIA) %>%
+  count() %>%
+  rename(Acessos = n) %>% 
+  spread(CATEGORIA, Acessos) %>% 
+  ungroup() %>% 
+  mutate(Total = (Filme + Serie)) %>% 
+  arrange(-Total)
+
+Turnos_Categ$Total <- as.factor(Turnos_Categ$Total)
+
+Via_Categ <- df %>% 
+  group_by(EXECUTADO_VIA, CATEGORIA) %>%
+  count() %>%
+  rename(Acessos = n) %>% 
+  spread(CATEGORIA, Acessos) %>% 
+  ungroup() %>% 
+  mutate(Total = (Filme + Serie)) %>% 
+  arrange(-Total)
+
+Via_Categ$Total <- as.factor(Via_Categ$Total)
+```
+
+Dashboard
+===========================================================================
+
+Column {data-width=200}
+---------------------------------------------------------------------------
+
+### Total
+
+```{r}
+renderValueBox({
+  valueBox(value = paste(format(Total_Acessos_Cat$Total, big.mark = '.'), '', sep = ' '), 
+         caption = 'Total de Acessos', 
+         icon = 'ion-alert', 
+         color = '#000000')
+})
+```
+
+### Filmes 
+
+```{r}
+renderValueBox({
+  valueBox(value = paste(format(Total_Acessos_Cat$Filme[1], big.mark = ','), ' (',
+                       round(100 * Total_Acessos_Cat$Filme[1] / Total_Acessos_Cat$Total[1], 1), '%)', sep = ''), 
+         caption = 'Acessos a Filmes', 
+         icon = 'ion-android-film', 
+         color = '#A52A2A')
+})
+```
+
+### Séries 
+
+```{r}
+renderValueBox({
+  valueBox(value = paste(format(Total_Acessos_Cat$Serie[1], big.mark = ','), ' (',
+                       round(100 * Total_Acessos_Cat$Serie[1] / Total_Acessos_Cat$Total[1], 1), '%)', sep = ''), 
+         caption = 'Acessos a Séries', 
+         icon = 'ion-grid', 
+         color = '#A9A9A9')
+})
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Gêneros na Categoria Filmes
+
+```{r}
+composition <- df %>% 
+    group_by(CATEGORIA, GENERO) %>% 
+    count() %>%
+    rename(Contatos = n) %>% 
+    spread(CATEGORIA, Contatos)
+
+Filmes <- plot_ly(composition, 
+                    labels = ~GENERO, 
+                    values = ~Filme, type = 'pie') %>% 
+    layout(title = '',
+           xaxis = list(showgrid = FALSE, 
+                        zeroline = FALSE, 
+                        showticklabels = FALSE),
+           yaxis = list(showgrid = FALSE, 
+                        zeroline = FALSE, 
+                        showticklabels = FALSE))
+Filmes
+```
+
+### Total Dispositivos por Categoria
+
+```{r}
+
+gf_bar <- plotly::plot_ly(
+    data = Dispositivos_Categ,
+    x = ~DISPOSITIVO,
+    y = ~Filme,
+    type = 'bar',
+    name = 'Filmes',
+    marker = list(color = '#A52A2A')) %>% 
+    plotly::add_trace(
+      y = ~Serie,
+      name = 'Séries',
+      marker = list(color = '#A9A9A9')) %>%
+    plotly::layout(
+        title = '',
+        barmode = 'stack',
+        yaxis = list(title = 'Acessos'),
+        xaxis = list(title = ''),
+        hovermode = 'compare')
+        
+gf_bar <- layout(gf_bar, xaxis = list(categoryarray = ~DISPOSITIVO, categoryorder = 'array'))
+gf_bar
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Períodos mais acessados por Categoria
+
+```{r}
+plotly::plot_ly(data = Turnos_Categ,
+                x = ~PERIODO,
+                y = ~Filme, 
+                name = 'Filmes', 
+                fillcolor = '#A52A2A',
+                type = 'scatter',
+                mode = 'none', 
+                stackgroup = 'one') %>%
+    plotly::add_trace(y = ~Serie,
+                      name = 'Séries',
+                      fillcolor = '#A9A9A9') %>% 
+    plotly::layout(yaxis = list(title = 'Acessos'),
+                   xaxis = list(title = ''),
+                   hovermode = 'compare')
+```
+
+### Via de Execução por Categoria
+
+```{r}
+
+gf_lin <- plotly::plot_ly(data = Via_Categ) %>%
+    plotly::add_trace(
+      x = ~EXECUTADO_VIA,
+      y = ~Serie,
+      type = 'scatter',
+      mode = 'lines+markers',
+      name = 'Séries',
+      marker = list(color = '#A52A2A'),
+      line = list(color = '#A52A2A', width = 2)) %>% 
+    plotly::add_trace(
+      x = ~EXECUTADO_VIA,
+      y = ~Filme,
+      type = 'scatter',
+      mode = 'lines+markers',
+      name = 'Filmes',
+      marker = list(color = '#A9A9A9'),
+      line = list(color = '#A9A9A9', width = 2)) %>%
+    plotly::layout(
+        title = '',
+        yaxis = list(title = 'Acessos'),
+        xaxis = list(title = ''),
+        hovermode = 'compare')
+gf_lin
+```
