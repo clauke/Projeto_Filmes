@@ -1,6 +1,8 @@
 # Projeto_Filmes
 Projeto de visualização com Linguagem R e flexdashboard.
+
 PROJETO DE ANÁLISE E VISUALIZAÇÃO PARA SERVIÇOS DE STREAMING
+
 VISÃO GERAL
 
 I.	Introdução
@@ -12,9 +14,13 @@ Escopo
 Análise estatística dos dados para responder perguntas de negócio. Dentre elas: 
 
 •	Total de acessos em determinado período
+
 •	Qual tipo de programa teve mais acessos
+
 •	Número de acessos por turno
+
 •	Qual equipamento é mais usado nos acessos
+
 •	Qual é a forma/via de execução do programa mais utilizada pelo usuário
 
 II.	Skills e Conhecimentos empregados
@@ -22,17 +28,24 @@ II.	Skills e Conhecimentos empregados
 As seguintes ferramentas/conhecimentos foram utilizadas neste projeto:
 
 •	Linguagem R
+
 o	R for Windows 4.2.2
-o	RStudio 2022.12.0 
-o	flexdasboard – visite: https://pkgs.rstudio.com/flexdashboard/
+
+  o	 RStudio 2022.12.0 
+  o	flexdasboard – visite: https://pkgs.rstudio.com/flexdashboard/
+  
 •	Markdown – prévio conhecimento da linguagem facilita o trabalho.
+
 •	Microsoft Excel 2019
 
 III.	Etapas
 
 •	Criação do dataset – uso de funções como PROCV e ALEATÓRIO para gerar dados.
+
 •	Transformações.
+
 •	Codificação.
+
 •	Publicação do projeto no GitHub.
 
 IV.	Considerações
@@ -44,5 +57,7 @@ V.	Acesso
 Para visualizar o dashboard:
 
 •	Baixe os arquivos Dataset.xlsx e Dash_Filmes.Rmd
+
 •	Abra o arquivo Dash_Filmes.Rmd no RStudio
+
 •	No RStudio, clique em 'Run document'.
